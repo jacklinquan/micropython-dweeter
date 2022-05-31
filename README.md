@@ -34,3 +34,42 @@ Alternatively just copy dweeter.py and its dependency to the MicroPython device.
 >>> dwtr.get_new_data()
 {'STRING DATA': 'STRING VALUE', 'INT DATA': 100, 'FLOAT DATA': 3.14, 'BOOL DATA': True, 'remote_time': '2022-05-30T04:15:49.000Z', 'created_time': '2022-05-30T04:15:54.787Z'}
 ```
+
+## On messaging security
+The free dweet service is public.
+By "public", it means:
+- Every one on Internet can see what you are sending.
+- Every one can send something for the same "thing" name to confuse you.
+
+The publicly exposed user information:
+- The "thing" name, which you can think of as the unique virtual mailbox name.
+- The keys of the "content" dictionary.
+- The values of the "content" dictionary.
+
+The dweeter module wraps the contents as a single key-value pair.
+So there is only one key and one value in the "content" dictionary.
+And the "thing" name and the "content" dictionary are encrypted.
+So no one knows what they mean.
+
+Without knowing what the information means,
+potential attackers can still send something for the same "thing" name.
+Because the "content" dictionary is encrypted,
+the only way to do this is to capture a bunch of messages
+and send them randomly.
+The key and the value of the "content" dictionary both include
+the same time stamp.
+A mismatch of them will result in an error that is handled by dweeter.
+But a copy of the whole "content" dictionary could
+still be passed on to the receiver.
+This is often referred to as "replay attack".
+
+The decrypted user data dictionary includes 2 extra key-value pairs:
+- "created_time", the timestamp from the dweet service.
+- "remote_time", the timestamp from the sending device.
+
+You can compare these two timestamps to decide if a "replay attack" happened.
+On a micropython device, you can use `ntptime.settime()` to set the local time.
+Be aware of a normal gap between "created_time" and "remote_time".
+On a PC I observed 4 to 5 seconds difference.
+On a micropython device I observed 8 to 9 seconds difference.
+This time difference could vary from case to case.
